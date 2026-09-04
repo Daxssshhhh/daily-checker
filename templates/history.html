@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+History & Notes - Daily Checker
+{% endblock %}
+
+
+{% block content %}
+
+<header class="topbar">
+
+    <div>
+
+        <p class="eyebrow">
+            YOUR LOGBOOK
+        </p>
+
+        <h2>
+            History & Notes
+        </h2>
+
+        <p class="muted">
+            Review your previous days,
+            tasks and notes.
+        </p>
+
+    </div>
+
+</header>
+
+
+
+<!-- DATE SELECTOR -->
+
+<div class="date-card">
+
+    <form
+        method="GET"
+        action="{{ url_for('history') }}"
+    >
+
+        <label>
+            Select a date
+        </label>
+
+        <div class="date-row">
+
+            <input
+                type="date"
+                name="date"
+                value="{{ selected_date }}"
+            >
+
+            <button
+                class="primary-btn"
+                type="submit"
+            >
+                Open day
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+
+<div class="two-column">
+
+
+    <!-- TASK HISTORY -->
+
+    <section class="panel">
+
+        <div class="panel-heading">
+
+            <div>
+
+                <p class="eyebrow">
+                    TASK LOG
+                </p>
+
+                <h3>
+                    {{ selected_date }}
+                </h3>
+
+            </div>
+
+        </div>
+
+
+        <div class="history-list">
+
+            {% for habit in habits %}
+
+            <div class="history-item">
+
+                <form
+                    action="{{ url_for('toggle_habit', habit_id=habit.id) }}"
+                    method="POST"
+                >
+
+                    <input
+                        type="hidden"
+                        name="log_date"
+                        value="{{ selected_date }}"
+                    >
+
+                    <button
+                        class="check-btn
+                        {% if habit.completed %}
+                        checked
+                        {% endif %}"
+                        type="submit"
+                    >
+
+                        {% if habit.completed %}
+                            ✓
+                        {% endif %}
+
+                    </button>
+
+                </form>
+
+
+                <span
+                    class="{% if habit.completed %}
+                    strikethrough
+                    {% endif %}"
+                >
+
+                    {{ habit.name }}
+
+                </span>
+
+
+                <span class="status">
+
+                    {% if habit.completed %}
+                        Done
+                    {% else %}
+                        Not done
+                    {% endif %}
+
+                </span>
+
+            </div>
+
+            {% else %}
+
+            <p class="muted">
+                No tasks have been added yet.
+            </p>
+
+            {% endfor %}
+
+        </div>
+
+    </section>
+
+
+
+    <!-- NOTES -->
+
+    <section class="panel">
+
+        <div class="panel-heading">
+
+            <div>
+
+                <p class="eyebrow">
+                    DAILY NOTES
+                </p>
+
+                <h3>
+                    What happened today?
+                </h3>
+
+            </div>
+
+        </div>
+
+
+        <form
+            action="{{ url_for('save_note') }}"
+            method="POST"
+        >
+
+            <input
+                type="hidden"
+                name="note_date"
+                value="{{ selected_date }}"
+            >
+
+
+            <textarea
+                name="content"
+                placeholder="Write your thoughts, wins, problems, plans, reminders..."
+            >{{ note }}</textarea>
+
+
+            <button
+                type="submit"
+                class="primary-btn full-btn"
+            >
+                Save note
+            </button>
+
+        </form>
+
+    </section>
+
+</div>
+
+{% endblock %}

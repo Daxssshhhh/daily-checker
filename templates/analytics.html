@@ -1,0 +1,433 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Analytics - Daily Checker
+{% endblock %}
+
+
+{% block content %}
+
+<header class="topbar">
+
+    <div>
+
+        <p class="eyebrow">
+            YOUR PERFORMANCE
+        </p>
+
+        <h2>
+            Analytics
+        </h2>
+
+        <p class="muted">
+            See how consistently you complete
+            your daily tasks.
+        </p>
+
+    </div>
+
+</header>
+
+
+
+<!-- PERIOD BUTTONS -->
+
+<div class="period-tabs">
+
+    <button
+        data-period="day"
+    >
+        Day
+    </button>
+
+
+    <button
+        data-period="week"
+        class="active"
+    >
+        Week
+    </button>
+
+
+    <button
+        data-period="month"
+    >
+        Month
+    </button>
+
+
+    <button
+        data-period="30days"
+    >
+        30 Days
+    </button>
+
+</div>
+
+
+
+<!-- PROGRESS GRAPH -->
+
+<section class="chart-panel">
+
+    <div class="panel-heading">
+
+        <div>
+
+            <p class="eyebrow">
+                COMPLETION TREND
+            </p>
+
+            <h3 id="chartTitle">
+                Weekly completion
+            </h3>
+
+        </div>
+
+
+        <div
+            class="stat-pill"
+            id="averageStat"
+        >
+            Average: 0%
+        </div>
+
+    </div>
+
+
+    <div class="chart-wrap">
+
+        <canvas
+            id="progressChart"
+        ></canvas>
+
+    </div>
+
+</section>
+
+
+
+<!-- HABIT GRAPH -->
+
+<section class="chart-panel">
+
+    <div class="panel-heading">
+
+        <div>
+
+            <p class="eyebrow">
+                TASK BREAKDOWN
+            </p>
+
+            <h3>
+                Completions by task
+            </h3>
+
+        </div>
+
+    </div>
+
+
+    <div class="chart-wrap small-chart">
+
+        <canvas
+            id="habitChart"
+        ></canvas>
+
+    </div>
+
+</section>
+
+{% endblock %}
+
+
+
+{% block scripts %}
+
+<!-- Chart.js -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/chart.js"
+></script>
+
+
+<script>
+
+let progressChart = null;
+
+let habitChart = null;
+
+
+
+async function loadAnalytics(period) {
+
+    const response =
+        await fetch(
+            `/api/analytics?period=${period}`
+        );
+
+
+    const data =
+        await response.json();
+
+
+
+    // Average
+
+    let average = 0;
+
+    if (data.daily.length > 0) {
+
+        average =
+            Math.round(
+                data.daily.reduce(
+                    (a, b) => a + b,
+                    0
+                ) /
+                data.daily.length
+            );
+
+    }
+
+
+    document.getElementById(
+        "averageStat"
+    ).textContent =
+        `Average: ${average}%`;
+
+
+
+    // Titles
+
+    const titles = {
+
+        day:
+            "Today's completion",
+
+        week:
+            "Weekly completion",
+
+        month:
+            "Monthly completion",
+
+        "30days":
+            "Last 30 days"
+
+    };
+
+
+    document.getElementById(
+        "chartTitle"
+    ).textContent =
+        titles[period];
+
+
+
+    // Destroy old charts
+
+    if (progressChart) {
+
+        progressChart.destroy();
+
+    }
+
+
+    if (habitChart) {
+
+        habitChart.destroy();
+
+    }
+
+
+
+    // PROGRESS LINE CHART
+
+    progressChart =
+        new Chart(
+
+            document.getElementById(
+                "progressChart"
+            ),
+
+            {
+
+                type: "line",
+
+                data: {
+
+                    labels: data.labels,
+
+                    datasets: [
+
+                        {
+
+                            label:
+                                "Completion %",
+
+                            data:
+                                data.daily,
+
+                            tension:
+                                0.35,
+
+                            fill:
+                                true,
+
+                            borderWidth:
+                                2
+
+                        }
+
+                    ]
+
+                },
+
+                options: {
+
+                    responsive:
+                        true,
+
+                    maintainAspectRatio:
+                        false,
+
+                    scales: {
+
+                        y: {
+
+                            beginAtZero:
+                                true,
+
+                            max:
+                                100
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+
+
+    // HABIT BAR CHART
+
+    habitChart =
+        new Chart(
+
+            document.getElementById(
+                "habitChart"
+            ),
+
+            {
+
+                type: "bar",
+
+                data: {
+
+                    labels:
+                        data.habits.map(
+                            h => h.name
+                        ),
+
+                    datasets: [
+
+                        {
+
+                            label:
+                                "Completed days",
+
+                            data:
+                                data.habits.map(
+                                    h =>
+                                        h.completed
+                                ),
+
+                            borderWidth:
+                                1
+
+                        }
+
+                    ]
+
+                },
+
+                options: {
+
+                    responsive:
+                        true,
+
+                    maintainAspectRatio:
+                        false,
+
+                    scales: {
+
+                        y: {
+
+                            beginAtZero:
+                                true
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+}
+
+
+
+// Period buttons
+
+document
+    .querySelectorAll(
+        ".period-tabs button"
+    )
+    .forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                document
+                    .querySelectorAll(
+                        ".period-tabs button"
+                    )
+                    .forEach(
+                        b =>
+                            b.classList.remove(
+                                "active"
+                            )
+                    );
+
+
+                button.classList.add(
+                    "active"
+                );
+
+
+                loadAnalytics(
+                    button.dataset.period
+                );
+
+            }
+        );
+
+    });
+
+
+
+// Load week by default
+
+loadAnalytics("week");
+
+</script>
+
+{% endblock %}

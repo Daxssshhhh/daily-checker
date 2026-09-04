@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Today - Daily Checker
+{% endblock %}
+
+
+{% block content %}
+
+<header class="topbar">
+
+    <div>
+
+        <p class="eyebrow">
+            YOUR DAILY LOG
+        </p>
+
+        <h2>
+            Today
+        </h2>
+
+        <p class="muted">
+            {{ today }}
+        </p>
+
+    </div>
+
+
+    <a
+        class="outline-btn"
+        href="{{ url_for('history') }}"
+    >
+        View history →
+    </a>
+
+</header>
+
+
+
+<!-- PROGRESS CARD -->
+
+<section class="hero-card">
+
+    <div>
+
+        <p class="eyebrow light">
+            TODAY'S PROGRESS
+        </p>
+
+        <h3>
+            {{ completed }} / {{ total }}
+            completed
+        </h3>
+
+        <p class="hero-text">
+            Keep going — consistency matters
+            more than perfection.
+        </p>
+
+    </div>
+
+
+    <div
+        class="progress-ring"
+        style="--progress: {{ percentage }}%"
+    >
+
+        <div>
+            {{ percentage }}%
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- TASK SECTION -->
+
+<section>
+
+    <div class="section-heading">
+
+        <div>
+
+            <h3>
+                Daily tasks
+            </h3>
+
+            <p class="muted">
+                Add anything you want to
+                track every day.
+            </p>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ADD TASK -->
+
+    <form
+        action="{{ url_for('add_habit') }}"
+        method="POST"
+        class="add-form"
+    >
+
+        <input
+            type="text"
+            name="name"
+            placeholder="e.g. Study DSA for 1 hour"
+            required
+        >
+
+        <button
+            type="submit"
+            class="primary-btn"
+        >
+            + Add task
+        </button>
+
+    </form>
+
+
+
+    <!-- TASKS -->
+
+    <div class="task-list">
+
+        {% for habit in habits %}
+
+        <div
+            class="task-card
+            {% if habit.completed %}
+            done
+            {% endif %}"
+        >
+
+            <!-- CHECK -->
+
+            <form
+                action="{{ url_for('toggle_habit', habit_id=habit.id) }}"
+                method="POST"
+            >
+
+                <input
+                    type="hidden"
+                    name="log_date"
+                    value="{{ today }}"
+                >
+
+                <button
+                    class="check-btn"
+                    type="submit"
+                >
+
+                    {% if habit.completed %}
+                        ✓
+                    {% endif %}
+
+                </button>
+
+            </form>
+
+
+            <!-- TASK NAME -->
+
+            <div class="task-name">
+
+                <span>
+                    {{ habit.name }}
+                </span>
+
+                {% if habit.completed %}
+
+                <small>
+                    Completed today
+                </small>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- DELETE -->
+
+            <form
+                action="{{ url_for('delete_habit', habit_id=habit.id) }}"
+                method="POST"
+                onsubmit="return confirm('Delete this task and all its history?')"
+            >
+
+                <button
+                    class="delete-btn"
+                    type="submit"
+                >
+                    ×
+                </button>
+
+            </form>
+
+        </div>
+
+        {% else %}
+
+        <div class="empty">
+
+            <div class="empty-icon">
+                ✓
+            </div>
+
+            <h3>
+                No daily tasks yet
+            </h3>
+
+            <p>
+                Add your first task above
+                and start tracking your day.
+            </p>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</section>
+
+
+
+<!-- QUICK LINKS -->
+
+<div class="quick-links">
+
+    <a href="{{ url_for('history') }}">
+        📝 Write today's note
+    </a>
+
+    <a href="{{ url_for('analytics') }}">
+        📈 See your progress
+    </a>
+
+</div>
+
+{% endblock %}
